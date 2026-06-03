@@ -1,187 +1,212 @@
 # ============================================================
-#  main.tf — 6 VMs projet ISRC LOGISTIA
-#  Toutes sous Debian 12 (Bookworm)
-#  Serveur : 32 GB RAM
-#  node1 : srv-web, srv-db, srv-runner
-#  node2 : srv-wazuh, srv-graylog, srv-ia
+#  main.tf — 5 VMs projet ISRC LOGISTIA
+#  Provider : bpg/proxmox
+#  VMIDs libres : 103 à 107
+#  Disques : 100GB (taille du template)
+#  srv-runner exclu (déjà existant VMID 102)
 # ============================================================
 
-# ---------- VM 1 : srv-web — Nginx + App LOGISTIA (VLAN 20) ----------
-resource "proxmox_vm_qemu" "srv_web" {
-  name        = "srv-web"
-  target_node = var.proxmox_node
-  clone       = "debian-12-template"
-  full_clone  = true
-  vmid        = 101
+resource "proxmox_virtual_environment_vm" "srv_web" {
+  node_name = var.proxmox_node
+  vm_id     = 103
+  name      = "srv-web"
 
-  cores   = 2
-  memory  = 1024
-  os_type = "cloud-init"
+  clone {
+    vm_id = 100
+    full  = true
+  }
+
+  cpu {
+    cores = 2
+    type  = "x86-64-v2-AES"
+  }
+
+  memory {
+    dedicated = 1024
+  }
 
   disk {
-    slot    = 0
-    size    = "20G"
-    type    = "scsi"
-    storage = var.storage
+    datastore_id = var.storage
+    size         = 100
+    interface    = "scsi0"
   }
 
-  network {
-    model  = "virtio"
-    bridge = var.network_bridge
-    tag    = 20  # VLAN 20
+  network_device {
+    bridge  = var.network_bridge
+    vlan_id = 20
+    model   = "virtio"
   }
 
-  ciuser  = "debian"
-  sshkeys = var.ssh_public_key
-  tags    = "web,nginx,docker,vlan20,logistia"
+  initialization {
+    user_account {
+      username = "debian"
+      keys     = [var.ssh_public_key]
+    }
+  }
+
+  tags = ["web", "nginx", "docker", "vlan20", "logistia"]
 }
 
-# ---------- VM 2 : srv-db — MariaDB (VLAN 20) ----------
-resource "proxmox_vm_qemu" "srv_db" {
-  name        = "srv-db"
-  target_node = var.proxmox_node
-  clone       = "debian-12-template"
-  full_clone  = true
-  vmid        = 102
+resource "proxmox_virtual_environment_vm" "srv_db" {
+  node_name = var.proxmox_node
+  vm_id     = 104
+  name      = "srv-db"
 
-  cores   = 2
-  memory  = 4096
-  os_type = "cloud-init"
+  clone {
+    vm_id = 100
+    full  = true
+  }
+
+  cpu {
+    cores = 2
+    type  = "x86-64-v2-AES"
+  }
+
+  memory {
+    dedicated = 2048
+  }
 
   disk {
-    slot    = 0
-    size    = "40G"
-    type    = "scsi"
-    storage = var.storage
+    datastore_id = var.storage
+    size         = 100
+    interface    = "scsi0"
   }
 
-  network {
-    model  = "virtio"
-    bridge = var.network_bridge
-    tag    = 20  # VLAN 20
+  network_device {
+    bridge  = var.network_bridge
+    vlan_id = 20
+    model   = "virtio"
   }
 
-  ciuser  = "debian"
-  sshkeys = var.ssh_public_key
-  tags    = "db,mariadb,vlan20,logistia"
+  initialization {
+    user_account {
+      username = "debian"
+      keys     = [var.ssh_public_key]
+    }
+  }
+
+  tags = ["db", "mariadb", "vlan20", "logistia"]
 }
 
-# ---------- VM 3 : srv-runner — GitHub Actions Runner (VLAN 50) ----------
-resource "proxmox_vm_qemu" "srv_runner" {
-  name        = "srv-runner"
-  target_node = var.proxmox_node
-  clone       = "debian-12-template"
-  full_clone  = true
-  vmid        = 103
+resource "proxmox_virtual_environment_vm" "srv_wazuh" {
+  node_name = var.proxmox_node
+  vm_id     = 105
+  name      = "srv-wazuh"
 
-  cores   = 2
-  memory  = 1024
-  os_type = "cloud-init"
+  clone {
+    vm_id = 100
+    full  = true
+  }
+
+  cpu {
+    cores = 4
+    type  = "x86-64-v2-AES"
+  }
+
+  memory {
+    dedicated = 4096
+  }
 
   disk {
-    slot    = 0
-    size    = "20G"
-    type    = "scsi"
-    storage = var.storage
+    datastore_id = var.storage
+    size         = 100
+    interface    = "scsi0"
   }
 
-  network {
-    model  = "virtio"
-    bridge = var.network_bridge
-    tag    = 50  # VLAN 50
+  network_device {
+    bridge  = var.network_bridge
+    vlan_id = 30
+    model   = "virtio"
   }
 
-  ciuser  = "debian"
-  sshkeys = var.ssh_public_key
-  tags    = "runner,cicd,vlan50,logistia"
+  initialization {
+    user_account {
+      username = "debian"
+      keys     = [var.ssh_public_key]
+    }
+  }
+
+  tags = ["soc", "wazuh", "vlan30", "logistia"]
 }
 
-# ---------- VM 4 : srv-wazuh — SOC Wazuh Manager (VLAN 30) ----------
-resource "proxmox_vm_qemu" "srv_wazuh" {
-  name        = "srv-wazuh"
-  target_node = var.proxmox_node
-  clone       = "debian-12-template"
-  full_clone  = true
-  vmid        = 104
+resource "proxmox_virtual_environment_vm" "srv_graylog" {
+  node_name = var.proxmox_node
+  vm_id     = 106
+  name      = "srv-graylog"
 
-  cores   = 4
-  memory  = 8192
-  os_type = "cloud-init"
+  clone {
+    vm_id = 100
+    full  = true
+  }
+
+  cpu {
+    cores = 4
+    type  = "x86-64-v2-AES"
+  }
+
+  memory {
+    dedicated = 4096
+  }
 
   disk {
-    slot    = 0
-    size    = "50G"
-    type    = "scsi"
-    storage = var.storage
+    datastore_id = var.storage
+    size         = 100
+    interface    = "scsi0"
   }
 
-  network {
-    model  = "virtio"
-    bridge = var.network_bridge
-    tag    = 30  # VLAN 30
+  network_device {
+    bridge  = var.network_bridge
+    vlan_id = 30
+    model   = "virtio"
   }
 
-  ciuser  = "debian"
-  sshkeys = var.ssh_public_key
-  tags    = "soc,wazuh,vlan30,logistia"
+  initialization {
+    user_account {
+      username = "debian"
+      keys     = [var.ssh_public_key]
+    }
+  }
+
+  tags = ["logs", "graylog", "elasticsearch", "vlan30", "logistia"]
 }
 
-# ---------- VM 5 : srv-graylog — Graylog + Elasticsearch (VLAN 30) ----------
-resource "proxmox_vm_qemu" "srv_graylog" {
-  name        = "srv-graylog"
-  target_node = var.proxmox_node
-  clone       = "debian-12-template"
-  full_clone  = true
-  vmid        = 105
+resource "proxmox_virtual_environment_vm" "srv_ia" {
+  node_name = var.proxmox_node
+  vm_id     = 107
+  name      = "srv-ia"
 
-  cores   = 4
-  memory  = 8192
-  os_type = "cloud-init"
+  clone {
+    vm_id = 100
+    full  = true
+  }
+
+  cpu {
+    cores = 4
+    type  = "x86-64-v2-AES"
+  }
+
+  memory {
+    dedicated = 4096
+  }
 
   disk {
-    slot    = 0
-    size    = "50G"
-    type    = "scsi"
-    storage = var.storage
+    datastore_id = var.storage
+    size         = 100
+    interface    = "scsi0"
   }
 
-  network {
-    model  = "virtio"
-    bridge = var.network_bridge
-    tag    = 30  # VLAN 30
+  network_device {
+    bridge  = var.network_bridge
+    vlan_id = 40
+    model   = "virtio"
   }
 
-  ciuser  = "debian"
-  sshkeys = var.ssh_public_key
-  tags    = "logs,graylog,elasticsearch,vlan30,logistia"
-}
-
-# ---------- VM 6 : srv-ia — Isolation Forest (VLAN 40) ----------
-resource "proxmox_vm_qemu" "srv_ia" {
-  name        = "srv-ia"
-  target_node = var.proxmox_node
-  clone       = "debian-12-template"
-  full_clone  = true
-  vmid        = 106
-
-  cores   = 4
-  memory  = 8192
-  os_type = "cloud-init"
-
-  disk {
-    slot    = 0
-    size    = "50G"
-    type    = "scsi"
-    storage = var.storage
+  initialization {
+    user_account {
+      username = "debian"
+      keys     = [var.ssh_public_key]
+    }
   }
 
-  network {
-    model  = "virtio"
-    bridge = var.network_bridge
-    tag    = 40  # VLAN 40
-  }
-
-  ciuser  = "debian"
-  sshkeys = var.ssh_public_key
-  tags    = "ia,isolation-forest,vlan40,logistia"
+  tags = ["ia", "isolation-forest", "vlan40", "logistia"]
 }
