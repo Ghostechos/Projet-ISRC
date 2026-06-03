@@ -1,0 +1,273 @@
+---
+# ============================================================
+#  Playbook Ansible — Projet ISRC LOGISTIA
+#  Configure toutes les VMs : durcissement + services
+# ============================================================
+
+# ============================================================
+# PLAY 1 — Configuration de base sur TOUTES les VMs
+# ============================================================
+- name: Configuration de base — toutes les VMs
+  hosts: all_vms
+  become: true
+
+  tasks:
+
+    - name: Mise à jour du système
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Installer les paquets de base
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - vim
+          - htop
+          - net-tools
+          - fail2ban
+          - ufw
+          - unattended-upgrades
+        state: present
+
+    - name: Désactiver la connexion SSH root
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+      notify: Redémarrer SSH
+
+    - name: Désactiver l'authentification par mot de passe SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+      notify: Redémarrer SSH
+
+    - name: Activer fail2ban
+      service:
+        name: fail2ban
+        state: started
+        enabled: yes
+
+    - name: Configurer UFW — autoriser SSH
+      ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+
+    - name: Activer UFW
+      ufw:
+        state: enabled
+        policy: deny
+
+    - name: Définir le hostname
+      hostname:
+        name: "{{ inventory_hostname }}"
+
+  handlers:
+    - name: Redémarrer SSH
+      service:
+        name: ssh
+        state: restarted
+
+# ============================================================
+# PLAY 2 — srv-web : Nginx + Docker
+# ============================================================
+- name: Configuration srv-web — Nginx + Docker
+  hosts: srv-web
+  become: true
+
+  tasks:
+
+    - name: Installer Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Démarrer et activer Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Ouvrir port 80 et 443 dans UFW
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - '80'
+        - '443'
+
+    - name: Installer Docker
+      shell: curl -fsSL https://get.docker.com | bash
+      args:
+        creates: /usr/bin/docker
+
+    - name: Démarrer Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+# ============================================================
+# PLAY 3 — srv-db : MariaDB
+# ============================================================
+- name: Configuration srv-db — MariaDB
+  hosts: srv-db
+  become: true
+
+  tasks:
+
+    - name: Installer MariaDB
+      apt:
+        name:
+          - mariadb-server
+          - python3-pymysql
+        state: present
+
+    - name: Démarrer et activer MariaDB
+      service:
+        name: mariadb
+        state: started
+        enabled: yes
+
+    - name: Sécuriser MariaDB — supprimer utilisateurs anonymes
+      mysql_user:
+        name: ''
+        host_all: yes
+        state: absent
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Créer base de données logistia
+      mysql_db:
+        name: logistia_db
+        state: present
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Ouvrir port MariaDB dans UFW (VLAN 20 uniquement)
+      ufw:
+        rule: allow
+        port: '3306'
+        proto: tcp
+        src: '192.168.20.0/24'
+
+# ============================================================
+# PLAY 4 — srv-wazuh : Wazuh Manager
+# ============================================================
+- name: Configuration srv-wazuh — Wazuh Manager
+  hosts: srv-wazuh
+  become: true
+
+  tasks:
+
+    - name: Ajouter la clé GPG Wazuh
+      shell: curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --dearmor -o /usr/share/keyrings/wazuh.gpg
+      args:
+        creates: /usr/share/keyrings/wazuh.gpg
+
+    - name: Ajouter le repo Wazuh
+      apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main"
+        state: present
+        filename: wazuh
+
+    - name: Installer Wazuh Manager
+      apt:
+        name: wazuh-manager
+        state: present
+        update_cache: yes
+
+    - name: Démarrer Wazuh Manager
+      service:
+        name: wazuh-manager
+        state: started
+        enabled: yes
+
+    - name: Ouvrir ports Wazuh dans UFW
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - '1514'
+        - '1515'
+        - '55000'
+
+# ============================================================
+# PLAY 5 — srv-graylog : Graylog + Elasticsearch
+# ============================================================
+- name: Configuration srv-graylog — Graylog + Elasticsearch
+  hosts: srv-graylog
+  become: true
+
+  tasks:
+
+    - name: Installer Java
+      apt:
+        name: openjdk-17-jre-headless
+        state: present
+
+    - name: Installer MongoDB
+      shell: |
+        curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | gpg --dearmor -o /usr/share/keyrings/mongodb.gpg
+        echo "deb [signed-by=/usr/share/keyrings/mongodb.gpg] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/6.0 main" > /etc/apt/sources.list.d/mongodb-org-6.0.list
+        apt-get update -qq && apt-get install -y mongodb-org
+      args:
+        creates: /usr/bin/mongod
+
+    - name: Démarrer MongoDB
+      service:
+        name: mongod
+        state: started
+        enabled: yes
+
+    - name: Ouvrir port Graylog dans UFW
+      ufw:
+        rule: allow
+        port: '9000'
+        proto: tcp
+
+# ============================================================
+# PLAY 6 — srv-ia : Isolation Forest
+# ============================================================
+- name: Configuration srv-ia — Isolation Forest
+  hosts: srv-ia
+  become: true
+
+  tasks:
+
+    - name: Installer Python et dépendances IA
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+        state: present
+
+    - name: Créer environnement virtuel IA
+      command: python3 -m venv /opt/ia-env
+      args:
+        creates: /opt/ia-env
+
+    - name: Installer les librairies IA
+      pip:
+        name:
+          - scikit-learn
+          - pandas
+          - numpy
+          - matplotlib
+          - flask
+        virtualenv: /opt/ia-env
+
+    - name: Ouvrir port API IA dans UFW
+      ufw:
+        rule: allow
+        port: '5000'
+        proto: tcp
+        src: '192.168.30.0/24'
