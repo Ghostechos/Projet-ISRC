@@ -1,0 +1,139 @@
+# ============================================================
+#  Pipeline CI/CD — Projet ISRC LOGISTIA
+#  GitHub Actions — Runner self-hosted sur srv-runner
+#
+#  Déclenchement : push sur la branche main
+# ============================================================
+
+name: Deploy ISRC LOGISTIA
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  # ============================================================
+  # JOB 1 — Lint Terraform
+  # ============================================================
+  lint:
+    name: Lint Terraform
+    runs-on: self-hosted
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Vérifier la syntaxe Terraform
+        working-directory: terraform
+        run: |
+          terraform fmt -check -recursive
+          terraform validate
+
+  # ============================================================
+  # JOB 2 — Scan sécurité
+  # ============================================================
+  security-scan:
+    name: Scan sécurité
+    runs-on: self-hosted
+    needs: lint
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer tfsec
+        run: |
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+
+      - name: Lancer tfsec sur les fichiers Terraform
+        working-directory: terraform
+        run: tfsec . --no-color || true
+
+      - name: Installer trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Scanner les fichiers avec trivy
+        run: trivy fs . --no-progress || true
+
+  # ============================================================
+  # JOB 3 — Terraform Plan
+  # ============================================================
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: self-hosted
+    needs: security-scan
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Terraform Init
+        working-directory: terraform
+        env:
+          TF_VAR_proxmox_token_secret: ${{ secrets.PROXMOX_TOKEN_SECRET }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: terraform
+        env:
+          TF_VAR_proxmox_token_secret: ${{ secrets.PROXMOX_TOKEN_SECRET }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+        run: terraform plan
+
+  # ============================================================
+  # JOB 4 — Terraform Apply
+  # ============================================================
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: self-hosted
+    needs: terraform-plan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Terraform Init
+        working-directory: terraform
+        env:
+          TF_VAR_proxmox_token_secret: ${{ secrets.PROXMOX_TOKEN_SECRET }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: terraform
+        env:
+          TF_VAR_proxmox_token_secret: ${{ secrets.PROXMOX_TOKEN_SECRET }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+        run: terraform apply -auto-approve
+
+  # ============================================================
+  # JOB 5 — Ansible Deploy
+  # ============================================================
+  ansible-deploy:
+    name: Ansible Deploy
+    runs-on: self-hosted
+    needs: terraform-apply
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Attendre que les VMs soient prêtes
+        run: sleep 30
+
+      - name: Lancer le playbook Ansible
+        working-directory: ansible
+        run: |
+          ansible-playbook \
+            -i inventory.ini \
+            playbook.yml \
+            --private-key /root/.ssh/id_ed25519_isrc \
+            -v
