@@ -1,0 +1,14 @@
+# ============================================================
+#  terraform.tfvars — Valeurs secrètes
+#  IMPORTANT : copier ce fichier en terraform.tfvars
+#  et NE JAMAIS commit terraform.tfvars sur GitHub !
+# ============================================================
+
+proxmox_token_secret = "COLLE-ICI-LE-SECRET-DU-TOKEN-TERRAFORM"
+
+ssh_public_key = "COLLE-ICI-TA-CLE-SSH-PUBLIQUE"
+
+# Optionnel — laisser par défaut si pas changé
+proxmox_node   = "pve-logistia"
+storage        = "local-lvm"
+network_bridge = "vmbr0"
