@@ -19,7 +19,7 @@ resource "proxmox_vm_qemu" "srv_web" {
   os_type = "cloud-init"
 
   disk {
-    slot    = "scsi0"
+    slot    = 0
     size    = "20G"
     type    = "scsi"
     storage = var.storage
@@ -49,7 +49,7 @@ resource "proxmox_vm_qemu" "srv_db" {
   os_type = "cloud-init"
 
   disk {
-    slot    = "scsi0"
+    slot    = 0
     size    = "40G"
     type    = "scsi"
     storage = var.storage
@@ -79,7 +79,7 @@ resource "proxmox_vm_qemu" "srv_runner" {
   os_type = "cloud-init"
 
   disk {
-    slot    = "scsi0"
+    slot    = 0
     size    = "20G"
     type    = "scsi"
     storage = var.storage
@@ -109,7 +109,7 @@ resource "proxmox_vm_qemu" "srv_wazuh" {
   os_type = "cloud-init"
 
   disk {
-    slot    = "scsi0"
+    slot    = 0
     size    = "50G"
     type    = "scsi"
     storage = var.storage
@@ -139,7 +139,7 @@ resource "proxmox_vm_qemu" "srv_graylog" {
   os_type = "cloud-init"
 
   disk {
-    slot    = "scsi0"
+    slot    = 0
     size    = "50G"
     type    = "scsi"
     storage = var.storage
@@ -169,7 +169,7 @@ resource "proxmox_vm_qemu" "srv_ia" {
   os_type = "cloud-init"
 
   disk {
-    slot    = "scsi0"
+    slot    = 0
     size    = "50G"
     type    = "scsi"
     storage = var.storage
