@@ -137,5 +137,5 @@ jobs:
           ansible-playbook \
             -i inventory.ini \
             playbook.yml \
-            --private-key /root/.ssh/id_ed25519_isrc \
+            --private-key /home/runner/.ssh/id_ed25519_isrc \
             -v
