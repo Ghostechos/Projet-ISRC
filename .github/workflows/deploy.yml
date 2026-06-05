@@ -51,7 +51,7 @@ jobs:
 
       - name: Installer tfsec
         run: |
-          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+          curl -L https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64 -o /usr/local/bin/tfsec && chmod +x /usr/local/bin/tfsec || true
 
       - name: Lancer tfsec sur les fichiers Terraform
         working-directory: terraform
