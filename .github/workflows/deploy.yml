@@ -114,7 +114,7 @@ jobs:
         env:
           TF_VAR_proxmox_token_secret: ${{ secrets.PROXMOX_TOKEN_SECRET }}
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -parallelism=1
 
   # ============================================================
   # JOB 5 — Ansible Deploy
