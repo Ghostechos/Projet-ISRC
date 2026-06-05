@@ -57,12 +57,11 @@ jobs:
         working-directory: terraform
         run: tfsec . --no-color || true
 
-      - name: Installer trivy
+      - name: Installer et scanner avec trivy
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-
-      - name: Scanner les fichiers avec trivy
-        run: trivy fs . --no-progress || true
+          mkdir -p /home/runner/bin
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /home/runner/bin || true
+          /home/runner/bin/trivy fs . --no-progress || true
 
   # ============================================================
   # JOB 3 — Terraform Plan
