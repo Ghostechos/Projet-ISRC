@@ -20,3 +20,15 @@ variable "network_bridge" {
   type        = string
   default     = "vmbr1"
 }
+
+variable "vmid_wazuh" {
+  type = number
+}
+
+variable "vmid_graylog" {
+  type = number
+}
+
+variable "vmid_ia" {
+  type = number
+}
