@@ -27,35 +27,35 @@ find_ip() {
     echo ""
 }
 
-echo "  Scan VLAN 20 pour srv-web..."
+echo "  Scan VLAN 20 pour SRV-VM-WEB..."
 IP_WEB=$(find_ip $VLAN20)
-echo "  Scan VLAN 20 pour srv-db..."
+echo "  Scan VLAN 20 pour SRV-VM-DB..."
 IP_DB=$(find_ip $VLAN20)
-echo "  Scan VLAN 30 pour srv-wazuh..."
+echo "  Scan VLAN 30 pour SRV-VM-WAZUH..."
 IP_WAZUH=$(find_ip $VLAN30)
-echo "  Scan VLAN 30 pour srv-graylog..."
+echo "  Scan VLAN 30 pour SRV-VM-GRAYLOG..."
 IP_GRAYLOG=$(find_ip $VLAN30)
-echo "  Scan VLAN 40 pour srv-ia..."
+echo "  Scan VLAN 40 pour SRV-VM-IA..."
 IP_IA=$(find_ip $VLAN40)
 
 echo ""
 echo "  IPs détectées :"
-echo "  srv-wazuh   : $IP_WAZUH"
-echo "  srv-graylog : $IP_GRAYLOG"
-echo "  srv-ia      : $IP_IA"
+echo "  SRV-VM-WAZUH   : $IP_WAZUH"
+echo "  SRV-VM-GRAYLOG : $IP_GRAYLOG"
+echo "  SRV-VM-IA      : $IP_IA"
 
 echo ">>> Mise à jour inventory.ini..."
 cat > /opt/Projet-ISRC/ansible/inventory.ini << INVENTORY
 [vlan20]
-$([ -n "$IP_WEB" ] && echo "srv-web     ansible_host=$IP_WEB" || echo "# srv-web non joignable")
-$([ -n "$IP_DB" ] && echo "srv-db      ansible_host=$IP_DB" || echo "# srv-db non joignable")
+$([ -n "$IP_WEB" ] && echo "SRV-VM-WEB     ansible_host=$IP_WEB" || echo "# SRV-VM-WEB non joignable")
+$([ -n "$IP_DB" ] && echo "SRV-VM-DB      ansible_host=$IP_DB" || echo "# SRV-VM-DB non joignable")
 
 [vlan30]
-$([ -n "$IP_WAZUH" ] && echo "srv-wazuh   ansible_host=$IP_WAZUH" || echo "# srv-wazuh non joignable")
-$([ -n "$IP_GRAYLOG" ] && echo "srv-graylog ansible_host=$IP_GRAYLOG" || echo "# srv-graylog non joignable")
+$([ -n "$IP_WAZUH" ] && echo "SRV-VM-WAZUH   ansible_host=$IP_WAZUH" || echo "# SRV-VM-WAZUH non joignable")
+$([ -n "$IP_GRAYLOG" ] && echo "SRV-VM-GRAYLOG ansible_host=$IP_GRAYLOG" || echo "# SRV-VM-GRAYLOG non joignable")
 
 [vlan40]
-$([ -n "$IP_IA" ] && echo "srv-ia      ansible_host=$IP_IA" || echo "# srv-ia non joignable")
+$([ -n "$IP_IA" ] && echo "SRV-VM-IA      ansible_host=$IP_IA" || echo "# SRV-VM-IA non joignable")
 
 [all_vms:children]
 vlan20

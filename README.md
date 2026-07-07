@@ -14,11 +14,11 @@ MembreRôleSofianeChef de projet + Analyste cybersécuritéChaffaIngénieure IA 
 🏗️ Architecture
 PROXMOX VE
 ├── srv-runner   (VLAN 50) — Terraform + Ansible + GitHub Runner
-├── srv-web      (VLAN 20) — Nginx + App LOGISTIA (Docker)
-├── srv-db       (VLAN 20) — MariaDB
-├── srv-wazuh    (VLAN 30) — Wazuh Manager (SOC)
-├── srv-graylog  (VLAN 30) — Graylog + Elasticsearch (logs)
-└── srv-ia       (VLAN 40) — Isolation Forest (détection anomalies)
+├── SRV-VM-WEB      (VLAN 20) — Nginx + App LOGISTIA (Docker)
+├── SRV-VM-DB       (VLAN 20) — MariaDB
+├── SRV-VM-WAZUH    (VLAN 30) — Wazuh Manager (SOC)
+├── SRV-VM-GRAYLOG  (VLAN 30) — Graylog + Elasticsearch (logs)
+└── SRV-VM-IA       (VLAN 40) — Isolation Forest (détection anomalies)
 
 🛠️ Stack technique
 CatégorieOutilsHyperviseurProxmox VEFirewallpfSenseIaCTerraform + AnsibleCI/CDGitHub Actions (runner self-hosted)SOCWazuh ManagerLogsGraylog + ElasticsearchIAIsolation Forest (modèle open source local)OSDebian 12 (Bookworm)

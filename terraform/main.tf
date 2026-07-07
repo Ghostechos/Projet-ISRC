@@ -1,7 +1,7 @@
 resource "proxmox_virtual_environment_vm" "srv_wazuh" {
   node_name = var.proxmox_node
   vm_id     = 105
-  name      = "srv-wazuh"
+  name      = "SRV-VM-WAZUH"
   clone {
     vm_id = 100
     full  = true
@@ -35,7 +35,7 @@ resource "proxmox_virtual_environment_vm" "srv_wazuh" {
 resource "proxmox_virtual_environment_vm" "srv_graylog" {
   node_name = var.proxmox_node
   vm_id     = 106
-  name      = "srv-graylog"
+  name      = "SRV-VM-GRAYLOG"
   clone {
     vm_id = 100
     full  = true
@@ -69,7 +69,7 @@ resource "proxmox_virtual_environment_vm" "srv_graylog" {
 resource "proxmox_virtual_environment_vm" "srv_ia" {
   node_name = var.proxmox_node
   vm_id     = 107
-  name      = "srv-ia"
+  name      = "SRV-VM-IA"
   clone {
     vm_id = 100
     full  = true

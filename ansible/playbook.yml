@@ -76,10 +76,10 @@
         state: restarted
 
 # ============================================================
-# PLAY 2 — srv-web : Nginx + Docker
+# PLAY 2 — SRV-VM-WEB : Nginx + Docker
 # ============================================================
-- name: Configuration srv-web — Nginx + Docker
-  hosts: srv-web
+- name: Configuration SRV-VM-WEB — Nginx + Docker
+  hosts: SRV-VM-WEB
   become: true
 
   tasks:
@@ -116,10 +116,10 @@
         enabled: yes
 
 # ============================================================
-# PLAY 3 — srv-db : MariaDB
+# PLAY 3 — SRV-VM-DB : MariaDB
 # ============================================================
-- name: Configuration srv-db — MariaDB
-  hosts: srv-db
+- name: Configuration SRV-VM-DB — MariaDB
+  hosts: SRV-VM-DB
   become: true
 
   tasks:
@@ -158,10 +158,10 @@
         src: '192.168.20.0/24'
 
 # ============================================================
-# PLAY 4 — srv-wazuh : Wazuh Manager
+# PLAY 4 — SRV-VM-WAZUH : Wazuh Manager
 # ============================================================
-- name: Configuration srv-wazuh — Wazuh Manager
-  hosts: srv-wazuh
+- name: Configuration SRV-VM-WAZUH — Wazuh Manager
+  hosts: SRV-VM-WAZUH
   become: true
 
   tasks:
@@ -200,10 +200,10 @@
         - '55000'
 
 # ============================================================
-# PLAY 5 — srv-graylog : Graylog + Elasticsearch
+# PLAY 5 — SRV-VM-GRAYLOG : Graylog + Elasticsearch
 # ============================================================
-- name: Configuration srv-graylog — Graylog + Elasticsearch
-  hosts: srv-graylog
+- name: Configuration SRV-VM-GRAYLOG — Graylog + Elasticsearch
+  hosts: SRV-VM-GRAYLOG
   become: true
 
   tasks:
@@ -234,10 +234,10 @@
         proto: tcp
 
 # ============================================================
-# PLAY 6 — srv-ia : Isolation Forest
+# PLAY 6 — SRV-VM-IA : Isolation Forest
 # ============================================================
-- name: Configuration srv-ia — Isolation Forest
-  hosts: srv-ia
+- name: Configuration SRV-VM-IA — Isolation Forest
+  hosts: SRV-VM-IA
   become: true
 
   tasks:
