@@ -87,6 +87,15 @@ jobs:
         env:
           TF_VAR_proxmox_token_secret: ${{ secrets.PROXMOX_TOKEN_SECRET }}
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+      - name: Générer VMID variables
+        working-directory: terraform
+        run: |
+          cat > terraform.auto.tfvars << EOF
+          vmid_wazuh   = 110
+          vmid_graylog = 111
+          vmid_ia      = 112
+          EOF
+
         run: terraform plan
 
   # ============================================================
@@ -114,6 +123,15 @@ jobs:
         env:
           TF_VAR_proxmox_token_secret: ${{ secrets.PROXMOX_TOKEN_SECRET }}
           TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+      - name: Générer VMID variables
+        working-directory: terraform
+        run: |
+          cat > terraform.auto.tfvars << EOF
+          vmid_wazuh   = 110
+          vmid_graylog = 111
+          vmid_ia      = 112
+          EOF
+
         run: terraform apply -auto-approve -parallelism=1
 
   # ============================================================
